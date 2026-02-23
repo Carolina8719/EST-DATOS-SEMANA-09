@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}MiTienda{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <span class="logo">🏥 Sistema de Citas Médicas</span>
+            <p class="tagline">Gestión de citas, doctores y pacientes</p>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <ul>
+            <li><a href="{{ url_for('index') }}">🏠 Inicio</a></li>
+            <li><a href="{{ url_for('lista_productos') }}">💊 Productos</a></li>
+            <li><a href="{{ url_for('lista_clientes') }}">👥 Clientes</a></li>
+            <li><a href="{{ url_for('lista_facturas') }}">🧾 Facturas</a></li>
+            <li><a href="{{ url_for('about') }}">ℹ️ Acerca de</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2025 Sistema de Citas Médicas — Proyecto Flask · Semana 10</p>
+    </footer>
+
+</body>
+</html>

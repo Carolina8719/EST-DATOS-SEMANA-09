@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Bienvenido al Sistema 🏥</h1>
+    <p>Gestiona tus productos, clientes y facturas en un solo lugar.</p>
+</section>
+
+<section class="cards">
+    <div class="card">
+        <div class="card-icon">💊</div>
+        <h2>{{ total_productos }}</h2>
+        <p>Productos registrados</p>
+        <a href="{{ url_for('lista_productos') }}" class="btn">Ver productos</a>
+    </div>
+    <div class="card">
+        <div class="card-icon">👥</div>
+        <h2>{{ total_clientes }}</h2>
+        <p>Clientes activos</p>
+        <a href="{{ url_for('lista_clientes') }}" class="btn">Ver clientes</a>
+    </div>
+    <div class="card">
+        <div class="card-icon">🧾</div>
+        <h2>{{ total_facturas }}</h2>
+        <p>Facturas emitidas</p>
+        <a href="{{ url_for('lista_facturas') }}" class="btn">Ver facturas</a>
+    </div>
+</section>
+{% endblock %}

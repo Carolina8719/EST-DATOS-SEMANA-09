@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Facturas{% endblock %}
+
+{% block content %}
+<section class="page-section">
+    <h1>🧾 Listado de Facturas</h1>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>N° Factura</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Total ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in facturas %}
+            <tr>
+                <td><strong>{{ f.id }}</strong></td>
+                <td>{{ f.cliente }}</td>
+                <td>{{ f.fecha }}</td>
+                <td>{{ "%.2f"|format(f.total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
