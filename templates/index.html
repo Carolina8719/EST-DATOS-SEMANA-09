@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Sistema de Citas Médicas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Dashboard</h4>
+    <small class="text-muted">Sistema de Citas Médicas &mdash; Semana 11</small>
+  </div>
+  <a href="{{ url_for('cita_nueva') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> Nueva Cita
+  </a>
+</div>
+
+<!-- ─── Tarjetas de estadísticas ─── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Pacientes</div>
+          <div class="fs-2 fw-bold">{{ stats.total_pacientes }}</div>
+        </div>
+        <div class="icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-people"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Doctores</div>
+          <div class="fs-2 fw-bold">{{ stats.total_doctores }}</div>
+        </div>
+        <div class="icon bg-success bg-opacity-10 text-success">
+          <i class="bi bi-person-badge"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Total Citas</div>
+          <div class="fs-2 fw-bold">{{ stats.total_citas }}</div>
+        </div>
+        <div class="icon bg-info bg-opacity-10 text-info">
+          <i class="bi bi-calendar2-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Especialidades</div>
+          <div class="fs-2 fw-bold">{{ stats.especialidades_activas | length }}</div>
+        </div>
+        <div class="icon bg-warning bg-opacity-10 text-warning">
+          <i class="bi bi-award"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Citas por estado + Citas recientes ─── -->
+<div class="row g-3">
+  <!-- Estado de citas -->
+  <div class="col-md-4">
+    <div class="card table-card p-3 h-100">
+      <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-primary"></i>Citas por Estado</h6>
+      {% for estado, cantidad in stats.citas_por_estado.items() %}
+      <div class="mb-2">
+        <div class="d-flex justify-content-between small mb-1">
+          <span>{{ estado }}</span><strong>{{ cantidad }}</strong>
+        </div>
+        <div class="progress" style="height:6px">
+          <div class="progress-bar badge-{{ estado }}"
+               style="width: {{ (cantidad / [stats.total_citas, 1] | max * 100) | int }}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if stats.especialidades_activas %}
+      <hr>
+      <h6 class="fw-bold mb-2 small text-muted">ESPECIALIDADES ACTIVAS</h6>
+      {% for esp in stats.especialidades_activas %}
+        <span class="badge bg-secondary me-1 mb-1">{{ esp }}</span>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Citas recientes -->
+  <div class="col-md-8">
+    <div class="card table-card">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Próximas Citas</h6>
+        <a href="{{ url_for('citas') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr>
+            <th>Paciente</th><th>Doctor</th><th>Fecha</th><th>Hora</th><th>Estado</th>
+          </tr></thead>
+          <tbody>
+          {% for c in citas_recientes %}
+          <tr>
+            <td>{{ c.nombre_paciente }}</td>
+            <td>{{ c.nombre_doctor }}<br><small class="text-muted">{{ c.especialidad }}</small></td>
+            <td>{{ c.fecha }}</td>
+            <td>{{ c.hora }}</td>
+            <td><span class="badge badge-{{ c.estado }}">{{ c.estado }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-4">
+            <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+            No hay citas registradas.<br>
+            <a href="{{ url_for('cita_nueva') }}">Agendar primera cita →</a>
+          </td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Accesos rápidos ─── -->
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="card table-card p-3">
+      <h6 class="fw-bold mb-3"><i class="bi bi-lightning-charge me-2 text-warning"></i>Acciones Rápidas</h6>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('paciente_nuevo') }}" class="btn btn-outline-primary">
+          <i class="bi bi-person-plus me-1"></i> Nuevo Paciente
+        </a>
+        <a href="{{ url_for('doctor_nuevo') }}" class="btn btn-outline-success">
+          <i class="bi bi-person-plus me-1"></i> Nuevo Doctor
+        </a>
+        <a href="{{ url_for('cita_nueva') }}" class="btn btn-outline-info">
+          <i class="bi bi-calendar-plus me-1"></i> Agendar Cita
+        </a>
+        <a href="{{ url_for('pacientes') }}" class="btn btn-outline-secondary">
+          <i class="bi bi-search me-1"></i> Buscar Paciente
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

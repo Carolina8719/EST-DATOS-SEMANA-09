@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Agendar Cita{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <a href="{{ url_for('citas') }}" class="btn btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="fw-bold mb-0">Agendar Nueva Cita</h4>
+</div>
+
+<div class="card table-card p-4" style="max-width:600px">
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Paciente *</label>
+      <select name="id_paciente" class="form-select" required>
+        <option value="">-- Seleccione paciente --</option>
+        {% for p in pacientes %}
+          <option value="{{ p.id_paciente }}">{{ p.nombre }} ({{ p.cedula }})</option>
+        {% endfor %}
+      </select>
+      {% if not pacientes %}
+        <div class="form-text text-danger">
+          No hay pacientes. <a href="{{ url_for('paciente_nuevo') }}">Registre uno primero.</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Doctor *</label>
+      <select name="id_doctor" class="form-select" required>
+        <option value="">-- Seleccione doctor --</option>
+        {% for d in doctores %}
+          <option value="{{ d.id_doctor }}">{{ d.nombre }} — {{ d.especialidad }}</option>
+        {% endfor %}
+      </select>
+      {% if not doctores %}
+        <div class="form-text text-danger">
+          No hay doctores. <a href="{{ url_for('doctor_nuevo') }}">Registre uno primero.</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-semibold">Fecha *</label>
+        <input type="date" name="fecha" class="form-control" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-semibold">Hora *</label>
+        <input type="time" name="hora" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Motivo de consulta</label>
+      <textarea name="motivo" class="form-control" rows="3"
+                placeholder="Describa el motivo de la consulta…"></textarea>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button type="submit" class="btn btn-info text-white">
+        <i class="bi bi-calendar-check me-1"></i> Agendar Cita
+      </button>
+      <a href="{{ url_for('citas') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

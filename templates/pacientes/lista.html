@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Pacientes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Pacientes</h4>
+    <small class="text-muted">{{ pacientes | length }} registro(s) encontrado(s)</small>
+  </div>
+  <a href="{{ url_for('paciente_nuevo') }}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i> Nuevo Paciente
+  </a>
+</div>
+
+<!-- Búsqueda -->
+<div class="card table-card mb-3 p-3">
+  <form method="GET" class="d-flex gap-2">
+    <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar por nombre…"
+           class="form-control" style="max-width:320px"/>
+    <button class="btn btn-outline-primary"><i class="bi bi-search"></i> Buscar</button>
+    {% if busqueda %}
+      <a href="{{ url_for('pacientes') }}" class="btn btn-outline-secondary">Limpiar</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Tabla -->
+<div class="card table-card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>#ID</th><th>Nombre</th><th>Cédula</th>
+        <th>Teléfono</th><th>Correo</th><th>F. Nacimiento</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+      {% for p in pacientes %}
+      <tr>
+        <td><span class="badge bg-secondary">{{ p.id_paciente }}</span></td>
+        <td class="fw-semibold">{{ p.nombre }}</td>
+        <td>{{ p.cedula }}</td>
+        <td>{{ p.telefono or '—' }}</td>
+        <td>{{ p.correo or '—' }}</td>
+        <td>{{ p.fecha_nacimiento or '—' }}</td>
+        <td>
+          <a href="{{ url_for('paciente_editar', id=p.id_paciente) }}"
+             class="btn btn-sm btn-outline-warning me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="POST" action="{{ url_for('paciente_eliminar', id=p.id_paciente) }}"
+                class="d-inline"
+                onsubmit="return confirm('¿Eliminar a {{ p.nombre }}?')">
+            <button class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+        {% if busqueda %}No se encontraron resultados para "{{ busqueda }}".
+        {% else %}No hay pacientes registrados.{% endif %}
+      </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

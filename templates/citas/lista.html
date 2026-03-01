@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Citas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="bi bi-calendar2-check me-2 text-info"></i>Citas Médicas</h4>
+    <small class="text-muted">{{ citas | length }} cita(s) registrada(s)</small>
+  </div>
+  <a href="{{ url_for('cita_nueva') }}" class="btn btn-info text-white">
+    <i class="bi bi-calendar-plus me-1"></i> Agendar Cita
+  </a>
+</div>
+
+<div class="card table-card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>#</th><th>Paciente</th><th>Doctor</th><th>Especialidad</th>
+        <th>Fecha</th><th>Hora</th><th>Motivo</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+      {% for c in citas %}
+      <tr>
+        <td><span class="badge bg-secondary">{{ c.id_cita }}</span></td>
+        <td class="fw-semibold">{{ c.nombre_paciente }}</td>
+        <td>{{ c.nombre_doctor }}</td>
+        <td><span class="badge bg-light text-dark">{{ c.especialidad }}</span></td>
+        <td>{{ c.fecha }}</td>
+        <td>{{ c.hora }}</td>
+        <td>
+          <span title="{{ c.motivo }}" style="max-width:120px;display:inline-block;
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ c.motivo or '—' }}
+          </span>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('cita_estado', id=c.id_cita) }}"
+                class="d-flex gap-1">
+            <select name="estado" class="form-select form-select-sm"
+                    style="min-width:110px" onchange="this.form.submit()">
+              {% for est in estados %}
+                <option value="{{ est }}" {% if c.estado == est %}selected{% endif %}>
+                  {{ est }}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('cita_eliminar', id=c.id_cita) }}"
+                onsubmit="return confirm('¿Eliminar esta cita?')">
+            <button class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-center text-muted py-5">
+        <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+        No hay citas registradas.
+        <a href="{{ url_for('cita_nueva') }}">Agendar primera cita →</a>
+      </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
