@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Datos Persistidos - Semana 12{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h2 class="mb-1">📂 Persistencia de Datos</h2>
+  <p class="text-muted mb-4">Registros en TXT, JSON, CSV y SQLite</p>
+
+  <!-- FORMULARIO -->
+  <div class="card shadow-sm mb-5">
+    <div class="card-header bg-primary text-white fw-bold">
+      ➕ Registrar nueva cita en todos los formatos
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('datos_guardar') }}">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Nombre del paciente</label>
+            <input type="text" name="nombre" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Cédula</label>
+            <input type="text" name="cedula" class="form-control" required>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Doctor</label>
+            <input type="text" name="doctor" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Especialidad</label>
+            <select name="especialidad" class="form-select" required>
+              <option value="">Seleccione...</option>
+              {% for esp in especialidades %}
+              <option value="{{ esp }}">{{ esp }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Fecha</label>
+            <input type="date" name="fecha" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Hora</label>
+            <input type="time" name="hora" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Motivo</label>
+            <input type="text" name="motivo" class="form-control">
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary px-4">
+              💾 Guardar en TXT + JSON + CSV + SQLite
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MENSAJES -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- TABS -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-sqlite">🗄️ SQLite</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-json">📄 JSON</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-csv">📊 CSV</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-txt">📝 TXT</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- SQLite -->
+    <div class="tab-pane fade show active" id="tab-sqlite">
+      <div class="card shadow-sm">
+        <div class="card-header fw-bold">Registros en SQLite vía SQLAlchemy</div>
+        <div class="card-body p-0">
+          {% if datos_bd %}
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead class="table-dark">
+                <tr><th>#</th><th>Paciente</th><th>Cédula</th><th>Doctor</th><th>Especialidad</th><th>Fecha</th><th>Hora</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                {% for r in datos_bd %}
+                <tr>
+                  <td>{{ r.id }}</td><td>{{ r.nombre }}</td><td>{{ r.cedula }}</td>
+                  <td>{{ r.doctor }}</td><td>{{ r.especialidad }}</td>
+                  <td>{{ r.fecha }}</td><td>{{ r.hora }}</td>
+                  <td><span class="badge bg-secondary">{{ r.estado }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3">No hay registros aún.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON -->
+    <div class="tab-pane fade" id="tab-json">
+      <div class="card shadow-sm">
+        <div class="card-header fw-bold">Registros en datos.json</div>
+        <div class="card-body p-0">
+          {% if datos_json %}
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead class="table-dark">
+                <tr><th>Paciente</th><th>Cédula</th><th>Doctor</th><th>Especialidad</th><th>Fecha</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                {% for r in datos_json %}
+                <tr>
+                  <td>{{ r.nombre }}</td><td>{{ r.cedula }}</td>
+                  <td>{{ r.doctor }}</td><td>{{ r.especialidad }}</td>
+                  <td>{{ r.fecha }}</td>
+                  <td><span class="badge bg-info text-dark">{{ r.estado }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3">El archivo JSON está vacío.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV -->
+    <div class="tab-pane fade" id="tab-csv">
+      <div class="card shadow-sm">
+        <div class="card-header fw-bold">Registros en datos.csv</div>
+        <div class="card-body p-0">
+          {% if datos_csv %}
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead class="table-dark">
+                <tr><th>Paciente</th><th>Cédula</th><th>Doctor</th><th>Especialidad</th><th>Fecha</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                {% for r in datos_csv %}
+                <tr>
+                  <td>{{ r.nombre }}</td><td>{{ r.cedula }}</td>
+                  <td>{{ r.doctor }}</td><td>{{ r.especialidad }}</td>
+                  <td>{{ r.fecha }}</td>
+                  <td><span class="badge bg-success">{{ r.estado }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3">El archivo CSV está vacío.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- TXT -->
+    <div class="tab-pane fade" id="tab-txt">
+      <div class="card shadow-sm">
+        <div class="card-header fw-bold">Líneas en datos.txt</div>
+        <div class="card-body">
+          {% if datos_txt %}
+            {% for linea in datos_txt %}
+            <p class="font-monospace small border-bottom pb-1 mb-1">{{ linea }}</p>
+            {% endfor %}
+          {% else %}
+          <p class="text-muted">El archivo TXT está vacío.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
