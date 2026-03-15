@@ -1,0 +1,61 @@
+{# templates/mysql/usuarios/lista.html #}
+{% extends 'base.html' %}
+{% block title %}Usuarios MySQL{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-people-fill text-primary"></i> Usuarios del Sistema <span class="badge bg-secondary">MySQL</span></h2>
+    <a href="{{ url_for('mysql_usuario_nuevo') }}" class="btn btn-primary">
+      <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+    </a>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>Nombre</th><th>Correo</th>
+            <th>Rol</th><th>Registrado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td>{{ u.id_usuario }}</td>
+            <td>{{ u.nombre }}</td>
+            <td>{{ u.mail }}</td>
+            <td>
+              {% if u.rol == 'admin' %}
+                <span class="badge bg-danger">Admin</span>
+              {% elif u.rol == 'medico' %}
+                <span class="badge bg-success">Médico</span>
+              {% else %}
+                <span class="badge bg-info text-dark">Recepcionista</span>
+              {% endif %}
+            </td>
+            <td>{{ u.created_at }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('mysql_usuario_editar', id=u.id_usuario) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil-fill"></i></a>
+              <form action="{{ url_for('mysql_usuario_eliminar', id=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar usuario?')">
+                <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash-fill"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No hay usuarios registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

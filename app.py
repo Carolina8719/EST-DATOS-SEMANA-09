@@ -1,6 +1,6 @@
 """
-Sistema de Citas Médicas - Semana 12
-Persistencia con TXT, JSON, CSV y SQLAlchemy (ORM)
+Sistema de Citas Médicas - Semana 13
+Persistencia con TXT, JSON, CSV, SQLAlchemy y MySQL
 Autor: Carolina8719
 """
 
@@ -11,6 +11,19 @@ import os
 # ── SQLAlchemy (Semana 12) ──────────────────────────────────────────────
 from inventario.bd import db, CitaRegistro
 from inventario.productos import registrar_cita_completa, obtener_datos_archivos, obtener_datos_bd
+
+# ── MySQL (Semana 13) ───────────────────────────────────────────────────
+from conexion.mysql_crud import (
+    insertar_usuario, obtener_usuarios,
+    actualizar_usuario, eliminar_usuario,
+    insertar_paciente_mysql, obtener_pacientes_mysql,
+    obtener_paciente_mysql, actualizar_paciente_mysql, eliminar_paciente_mysql,
+    insertar_doctor_mysql, obtener_doctores_mysql,
+    obtener_doctor_mysql, actualizar_doctor_mysql, eliminar_doctor_mysql,
+    insertar_cita_mysql, obtener_citas_detalle_mysql,
+    actualizar_estado_cita_mysql, eliminar_cita_mysql,
+    estadisticas_mysql,
+)
 
 app = Flask(__name__)
 app.secret_key = 'citas_medicas_secret_key_2024'
@@ -569,6 +582,218 @@ def datos_guardar():
     except Exception as e:
         flash(f'❌ Error: {e}', 'danger')
     return redirect(url_for('datos_ver'))
+
+
+# ============================================================
+#  RUTAS FLASK - Semana 13 - MySQL
+# ============================================================
+
+# ── USUARIOS ───────────────────────────────────────────────
+
+@app.route('/mysql/usuarios')
+def mysql_usuarios():
+    usuarios = obtener_usuarios()
+    return render_template('mysql/usuarios/lista.html', usuarios=usuarios)
+
+@app.route('/mysql/usuarios/nuevo', methods=['GET', 'POST'])
+def mysql_usuario_nuevo():
+    ROLES = ['admin', 'recepcionista', 'medico']
+    if request.method == 'POST':
+        try:
+            insertar_usuario(
+                nombre   = request.form['nombre'],
+                mail     = request.form['mail'],
+                password = request.form['password'],
+                rol      = request.form.get('rol', 'recepcionista'),
+            )
+            flash('✅ Usuario creado en MySQL.', 'success')
+            return redirect(url_for('mysql_usuarios'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/usuarios/formulario.html',
+                           usuario=None, accion='Registrar', roles=ROLES)
+
+@app.route('/mysql/usuarios/editar/<int:id>', methods=['GET', 'POST'])
+def mysql_usuario_editar(id):
+    ROLES = ['admin', 'recepcionista', 'medico']
+    usuarios = obtener_usuarios()
+    usuario  = next((u for u in usuarios if u['id_usuario'] == id), None)
+    if not usuario:
+        flash('Usuario no encontrado.', 'warning')
+        return redirect(url_for('mysql_usuarios'))
+    if request.method == 'POST':
+        try:
+            actualizar_usuario(
+                id_usuario = id,
+                nombre     = request.form['nombre'],
+                mail       = request.form['mail'],
+                rol        = request.form.get('rol', 'recepcionista'),
+            )
+            flash('✅ Usuario actualizado.', 'success')
+            return redirect(url_for('mysql_usuarios'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/usuarios/formulario.html',
+                           usuario=usuario, accion='Actualizar', roles=ROLES)
+
+@app.route('/mysql/usuarios/eliminar/<int:id>', methods=['POST'])
+def mysql_usuario_eliminar(id):
+    eliminar_usuario(id)
+    flash('🗑️ Usuario eliminado.', 'success')
+    return redirect(url_for('mysql_usuarios'))
+
+
+# ── PACIENTES MySQL ────────────────────────────────────────
+
+@app.route('/mysql/pacientes')
+def mysql_pacientes():
+    pacientes = obtener_pacientes_mysql()
+    return render_template('mysql/pacientes/lista.html', pacientes=pacientes)
+
+@app.route('/mysql/pacientes/nuevo', methods=['GET', 'POST'])
+def mysql_paciente_nuevo():
+    if request.method == 'POST':
+        try:
+            insertar_paciente_mysql(
+                nombre           = request.form['nombre'],
+                cedula           = request.form['cedula'],
+                telefono         = request.form['telefono'],
+                correo           = request.form['correo'],
+                fecha_nacimiento = request.form['fecha_nacimiento'],
+            )
+            flash('✅ Paciente guardado en MySQL.', 'success')
+            return redirect(url_for('mysql_pacientes'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/pacientes/formulario.html',
+                           paciente=None, accion='Registrar')
+
+@app.route('/mysql/pacientes/editar/<int:id>', methods=['GET', 'POST'])
+def mysql_paciente_editar(id):
+    paciente = obtener_paciente_mysql(id)
+    if not paciente:
+        flash('Paciente no encontrado.', 'warning')
+        return redirect(url_for('mysql_pacientes'))
+    if request.method == 'POST':
+        try:
+            actualizar_paciente_mysql(
+                id_paciente = id,
+                nombre      = request.form['nombre'],
+                telefono    = request.form['telefono'],
+                correo      = request.form['correo'],
+            )
+            flash('✅ Paciente actualizado en MySQL.', 'success')
+            return redirect(url_for('mysql_pacientes'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/pacientes/formulario.html',
+                           paciente=paciente, accion='Actualizar')
+
+@app.route('/mysql/pacientes/eliminar/<int:id>', methods=['POST'])
+def mysql_paciente_eliminar(id):
+    eliminar_paciente_mysql(id)
+    flash('🗑️ Paciente eliminado de MySQL.', 'success')
+    return redirect(url_for('mysql_pacientes'))
+
+
+# ── DOCTORES MySQL ─────────────────────────────────────────
+
+@app.route('/mysql/doctores')
+def mysql_doctores():
+    doctores = obtener_doctores_mysql()
+    return render_template('mysql/doctores/lista.html', doctores=doctores)
+
+@app.route('/mysql/doctores/nuevo', methods=['GET', 'POST'])
+def mysql_doctor_nuevo():
+    if request.method == 'POST':
+        try:
+            insertar_doctor_mysql(
+                nombre       = request.form['nombre'],
+                especialidad = request.form['especialidad'],
+                telefono     = request.form['telefono'],
+                correo       = request.form['correo'],
+            )
+            flash('✅ Doctor guardado en MySQL.', 'success')
+            return redirect(url_for('mysql_doctores'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/doctores/formulario.html',
+                           doctor=None, accion='Registrar',
+                           especialidades=Doctor.ESPECIALIDADES_VALIDAS)
+
+@app.route('/mysql/doctores/editar/<int:id>', methods=['GET', 'POST'])
+def mysql_doctor_editar(id):
+    doctor = obtener_doctor_mysql(id)
+    if not doctor:
+        flash('Doctor no encontrado.', 'warning')
+        return redirect(url_for('mysql_doctores'))
+    if request.method == 'POST':
+        try:
+            actualizar_doctor_mysql(
+                id_doctor    = id,
+                nombre       = request.form['nombre'],
+                especialidad = request.form['especialidad'],
+                telefono     = request.form['telefono'],
+                correo       = request.form['correo'],
+            )
+            flash('✅ Doctor actualizado en MySQL.', 'success')
+            return redirect(url_for('mysql_doctores'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/doctores/formulario.html',
+                           doctor=doctor, accion='Actualizar',
+                           especialidades=Doctor.ESPECIALIDADES_VALIDAS)
+
+@app.route('/mysql/doctores/eliminar/<int:id>', methods=['POST'])
+def mysql_doctor_eliminar(id):
+    eliminar_doctor_mysql(id)
+    flash('🗑️ Doctor eliminado de MySQL.', 'success')
+    return redirect(url_for('mysql_doctores'))
+
+
+# ── CITAS MySQL ────────────────────────────────────────────
+
+@app.route('/mysql/citas')
+def mysql_citas():
+    citas = obtener_citas_detalle_mysql()
+    return render_template('mysql/citas/lista.html',
+                           citas=citas, estados=Cita.ESTADOS)
+
+@app.route('/mysql/citas/nueva', methods=['GET', 'POST'])
+def mysql_cita_nueva():
+    if request.method == 'POST':
+        try:
+            insertar_cita_mysql(
+                id_paciente = int(request.form['id_paciente']),
+                id_doctor   = int(request.form['id_doctor']),
+                fecha       = request.form['fecha'],
+                hora        = request.form['hora'],
+                motivo      = request.form['motivo'],
+            )
+            flash('✅ Cita agendada en MySQL.', 'success')
+            return redirect(url_for('mysql_citas'))
+        except Exception as e:
+            flash(f'❌ Error: {e}', 'danger')
+    return render_template('mysql/citas/formulario.html',
+                           pacientes=obtener_pacientes_mysql(),
+                           doctores=obtener_doctores_mysql())
+
+@app.route('/mysql/citas/estado/<int:id>', methods=['POST'])
+def mysql_cita_estado(id):
+    nuevo_estado = request.form.get('estado')
+    actualizar_estado_cita_mysql(id, nuevo_estado)
+    flash(f'✅ Estado actualizado a "{nuevo_estado}".', 'success')
+    return redirect(url_for('mysql_citas'))
+
+@app.route('/mysql/citas/eliminar/<int:id>', methods=['POST'])
+def mysql_cita_eliminar(id):
+    eliminar_cita_mysql(id)
+    flash('🗑️ Cita eliminada de MySQL.', 'success')
+    return redirect(url_for('mysql_citas'))
+
+@app.route('/api/mysql/estadisticas')
+def api_mysql_estadisticas():
+    return jsonify(estadisticas_mysql())
 
 
 if __name__ == '__main__':

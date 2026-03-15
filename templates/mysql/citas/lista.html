@@ -1,0 +1,65 @@
+{# templates/mysql/citas/lista.html #}
+{% extends 'base.html' %}
+{% block title %}Citas MySQL{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-calendar2-heart text-danger"></i> Citas Médicas <span class="badge bg-secondary">MySQL</span></h2>
+    <a href="{{ url_for('mysql_cita_nueva') }}" class="btn btn-danger">
+      <i class="bi bi-plus-circle-fill"></i> Nueva Cita
+    </a>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>Fecha</th><th>Hora</th><th>Paciente</th>
+            <th>Doctor</th><th>Especialidad</th><th>Motivo</th>
+            <th>Estado</th><th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in citas %}
+          <tr>
+            <td>{{ c.id_cita }}</td>
+            <td>{{ c.fecha }}</td>
+            <td>{{ c.hora }}</td>
+            <td>{{ c.nombre_paciente }}</td>
+            <td>{{ c.nombre_doctor }}</td>
+            <td><span class="badge bg-info text-dark">{{ c.especialidad }}</span></td>
+            <td>{{ c.motivo or '—' }}</td>
+            <td>
+              {% set colores = {'Pendiente':'warning','Confirmada':'primary','Completada':'success','Cancelada':'danger'} %}
+              <span class="badge bg-{{ colores.get(c.estado, 'secondary') }}">{{ c.estado }}</span>
+            </td>
+            <td class="text-center">
+              <form action="{{ url_for('mysql_cita_estado', id=c.id_cita) }}" method="POST" class="d-inline">
+                <select name="estado" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                  {% for e in estados %}
+                  <option value="{{ e }}" {{ 'selected' if e == c.estado else '' }}>{{ e }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+              <form action="{{ url_for('mysql_cita_eliminar', id=c.id_cita) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta cita?')">
+                <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash-fill"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="text-center text-muted py-4">No hay citas registradas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
