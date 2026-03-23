@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Registro de Usuario{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white text-center py-3">
+        <h4 class="mb-0">Crear cuenta nueva</h4>
+        <small>Completa el formulario para registrarte</small>
+      </div>
+      <div class="card-body p-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre completo</label>
+            <input type="text" class="form-control" name="nombre" placeholder="Ej: María González" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Correo electrónico</label>
+            <input type="email" class="form-control" name="mail" placeholder="correo@ejemplo.com" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Rol en el sistema</label>
+            <select class="form-select" name="rol">
+              {% for r in roles %}
+                <option value="{{ r }}">{{ r | capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Contraseña</label>
+            <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" required minlength="6">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Confirmar contraseña</label>
+            <input type="password" class="form-control" name="confirmar_password" placeholder="Repite tu contraseña" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg">Registrarme</button>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer text-center py-3">
+        ¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión aquí</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white text-center py-3">
+        <h4 class="mb-0">Sistema de Citas Médicas</h4>
+        <small>Ingresa tus credenciales</small>
+      </div>
+      <div class="card-body p-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Correo electrónico</label>
+            <input type="email" class="form-control" name="mail" placeholder="correo@ejemplo.com" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Contraseña</label>
+            <input type="password" class="form-control" name="password" placeholder="Tu contraseña" required>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="recordar">
+            <label class="form-check-label">Recordar sesión</label>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">Iniciar sesión</button>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer text-center py-3">
+        ¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate aquí</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
