@@ -1,12 +1,13 @@
 """
-Sistema de Citas Médicas - Semana 14
-Autenticación de usuarios con Flask-Login
+Sistema de Citas Médicas - Semana 15
+CRUD completo, capas models/services/forms, reporte PDF
 Autor: Carolina8719
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 import sqlite3
 import os
+import io
 
 from inventario.bd import db, CitaRegistro
 from inventario.productos import registrar_cita_completa, obtener_datos_archivos, obtener_datos_bd
@@ -26,6 +27,12 @@ from conexion.mysql_crud import (
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import Usuario
 from conexion.auth_mysql import registrar_usuario_mysql, autenticar_usuario_mysql, obtener_usuario_por_id
+
+# ── SEMANA 15: imports nuevos ──────────────────────────────
+from models.paciente import Paciente
+from models.doctor   import Doctor
+from models.cita     import Cita
+from reportes.reporte_pdf import generar_reporte_citas
 
 app = Flask(__name__)
 app.secret_key = 'citas_medicas_secret_key_2024'
@@ -55,111 +62,6 @@ def cargar_usuario(id_usuario):
             rol        = datos.get('rol', 'recepcionista'),
         )
     return None
-
-
-class Paciente:
-    _ids_registrados = set()
-    def __init__(self, id_paciente, nombre, cedula, telefono, correo, fecha_nacimiento):
-        self.__id_paciente      = id_paciente
-        self.__nombre           = nombre
-        self.__cedula           = cedula
-        self.__telefono         = telefono
-        self.__correo           = correo
-        self.__fecha_nacimiento = fecha_nacimiento
-        Paciente._ids_registrados.add(id_paciente)
-    @property
-    def id_paciente(self):      return self.__id_paciente
-    @property
-    def nombre(self):           return self.__nombre
-    @property
-    def cedula(self):           return self.__cedula
-    @property
-    def telefono(self):         return self.__telefono
-    @property
-    def correo(self):           return self.__correo
-    @property
-    def fecha_nacimiento(self): return self.__fecha_nacimiento
-    @nombre.setter
-    def nombre(self, valor):
-        if not valor.strip(): raise ValueError("El nombre no puede estar vacío.")
-        self.__nombre = valor.strip()
-    @telefono.setter
-    def telefono(self, valor): self.__telefono = valor.strip()
-    @correo.setter
-    def correo(self, valor): self.__correo = valor.strip()
-    def to_dict(self):
-        return {"id_paciente": self.__id_paciente, "nombre": self.__nombre,
-                "cedula": self.__cedula, "telefono": self.__telefono,
-                "correo": self.__correo, "fecha_nacimiento": self.__fecha_nacimiento}
-    def __repr__(self): return f"<Paciente id={self.__id_paciente}>"
-
-
-class Doctor:
-    ESPECIALIDADES_VALIDAS = (
-        "Medicina General", "Pediatría", "Cardiología", "Dermatología",
-        "Ginecología", "Traumatología", "Neurología", "Oftalmología",
-        "Psiquiatría", "Odontología"
-    )
-    def __init__(self, id_doctor, nombre, especialidad, telefono, correo):
-        self.__id_doctor    = id_doctor
-        self.__nombre       = nombre
-        self.__especialidad = especialidad
-        self.__telefono     = telefono
-        self.__correo       = correo
-    @property
-    def id_doctor(self):    return self.__id_doctor
-    @property
-    def nombre(self):       return self.__nombre
-    @property
-    def especialidad(self): return self.__especialidad
-    @property
-    def telefono(self):     return self.__telefono
-    @property
-    def correo(self):       return self.__correo
-    @especialidad.setter
-    def especialidad(self, valor):
-        if valor not in Doctor.ESPECIALIDADES_VALIDAS: raise ValueError("Especialidad inválida.")
-        self.__especialidad = valor
-    def to_dict(self):
-        return {"id_doctor": self.__id_doctor, "nombre": self.__nombre,
-                "especialidad": self.__especialidad, "telefono": self.__telefono,
-                "correo": self.__correo}
-    def __repr__(self): return f"<Doctor id={self.__id_doctor}>"
-
-
-class Cita:
-    ESTADOS = ["Pendiente", "Confirmada", "Completada", "Cancelada"]
-    def __init__(self, id_cita, id_paciente, id_doctor, fecha, hora, motivo, estado="Pendiente"):
-        self.__id_cita     = id_cita
-        self.__id_paciente = id_paciente
-        self.__id_doctor   = id_doctor
-        self.__fecha       = fecha
-        self.__hora        = hora
-        self.__motivo      = motivo
-        self.__estado      = estado if estado in Cita.ESTADOS else "Pendiente"
-    @property
-    def id_cita(self):     return self.__id_cita
-    @property
-    def id_paciente(self): return self.__id_paciente
-    @property
-    def id_doctor(self):   return self.__id_doctor
-    @property
-    def fecha(self):       return self.__fecha
-    @property
-    def hora(self):        return self.__hora
-    @property
-    def motivo(self):      return self.__motivo
-    @property
-    def estado(self):      return self.__estado
-    @estado.setter
-    def estado(self, valor):
-        if valor not in Cita.ESTADOS: raise ValueError("Estado inválido.")
-        self.__estado = valor
-    def to_dict(self):
-        return {"id_cita": self.__id_cita, "id_paciente": self.__id_paciente,
-                "id_doctor": self.__id_doctor, "fecha": self.__fecha,
-                "hora": self.__hora, "motivo": self.__motivo, "estado": self.__estado}
-    def __repr__(self): return f"<Cita id={self.__id_cita}>"
 
 
 class GestorInventario:
@@ -290,7 +192,7 @@ class GestorInventario:
 gestor = GestorInventario()
 
 
-# ── AUTENTICACIÓN - Semana 14 ──────────────────────────────
+# ── AUTENTICACIÓN ──────────────────────────────────────────
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
@@ -347,7 +249,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ── RUTAS SEMANA 11 ────────────────────────────────────────
+# ── RUTAS PRINCIPALES ──────────────────────────────────────
 
 @app.route('/')
 @login_required
@@ -641,6 +543,30 @@ def mysql_cita_eliminar(id):
 @login_required
 def api_mysql_estadisticas():
     return jsonify(estadisticas_mysql())
+
+
+# ── SEMANA 15: Reporte PDF ─────────────────────────────────
+
+@app.route('/reporte/ver')
+@login_required
+def reporte_ver():
+    """Muestra el reporte PDF en el navegador."""
+    citas     = gestor.listar_citas_detalle()
+    pacientes = [p.to_dict() for p in gestor.listar_pacientes()]
+    doctores  = [d.to_dict() for d in gestor.listar_doctores()]
+    pdf_bytes = generar_reporte_citas(citas, pacientes, doctores)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf')
+
+@app.route('/reporte/pdf')
+@login_required
+def reporte_pdf():
+    """Descarga el reporte PDF."""
+    citas     = gestor.listar_citas_detalle()
+    pacientes = [p.to_dict() for p in gestor.listar_pacientes()]
+    doctores  = [d.to_dict() for d in gestor.listar_doctores()]
+    pdf_bytes = generar_reporte_citas(citas, pacientes, doctores)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf',
+                     as_attachment=True, download_name='reporte_citas_medicas.pdf')
 
 
 if __name__ == '__main__':
